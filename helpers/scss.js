@@ -16,6 +16,8 @@ import aliases from 'gulp-style-aliases';
 import configLoader from '../helpers/config-loader'
 import sassError from './sass-error'
 import { env, themes, tempPath, projectPath, browserSyncInstances } from '../helpers/config'
+import webpack from 'webpack-stream';
+import createWebpackConfig from 'magento2-theme-blank-sass-webpack';
 
 const getThemeAliases = function(theme) {
   return (theme.aliases || []).filter(function(alias) {
@@ -23,7 +25,7 @@ const getThemeAliases = function(theme) {
   })
 }
 
-export default function(name, file) {
+export default async function(name, file) {
   const theme = themes[name]
   const srcBase = path.join(tempPath, theme.dest)
   const stylesDir = theme.stylesDir ? theme.stylesDir : 'styles'
@@ -44,8 +46,9 @@ export default function(name, file) {
   }
 
   function adjustDestinationDirectory(file) {
-    if (file.dirname.startsWith(stylesDir)) {
-      file.dirname = file.dirname.replace(stylesDir, 'css')
+    if (file.extname === '.css') {
+      file.dirname = path.join(file.dirname, 'css');
+      console.log(file);
     }
     else {
       file.dirname = file.dirname.replace('/' + stylesDir, '')
@@ -54,43 +57,29 @@ export default function(name, file) {
   }
 
   theme.locale.forEach(locale => {
-    dest.push(path.join(projectPath, theme.dest, locale))
+    dest.push(path.join(projectPath, theme.dest, locale, 'css'))
   })
 
-  const gulpTask = src( // eslint-disable-line one-var
-    file || srcBase + '/**/*.scss',
-    { base: srcBase }
-  )
-    .pipe(aliases(getThemeAliases(theme)))
-    .pipe(
-      gulpIf(
-        !env.ci,
-        plumber({
-          errorHandler: notify.onError('Error: <%= error.message %>')
-        })
-      )
-    )
-    .pipe(gulpIf(!disableMaps, sourcemaps.init()))
-    .pipe(sass().on('error', sassError(env.ci || false)))
-    .pipe(gulpIf(production, postcss([cssnano()])))
-    .pipe(gulpIf(postcssConfig.length, postcss(postcssConfig || [])))
-    .pipe(gulpIf(production && !disableSuffix, rename({ suffix: '.min' })))
-    .pipe(gulpIf(!disableMaps, sourcemaps.write('.', { includeContent: true })))
-    .pipe(rename(adjustDestinationDirectory))
+  const webpackConfig = await createWebpackConfig(theme, projectPath);
+console.log(dest);
+  const gulpTask = webpack({
+    config: webpackConfig
+  })
+    //.pipe(rename(adjustDestinationDirectory))
     .pipe(multiDest(dest))
     .pipe(logger({
       display   : 'name',
       beforeEach: 'Theme: ' + name + ' ',
       afterEach : ' Compiled!'
-    }))
+    }));
 
-  if (browserSyncInstances) {
+  /*if (browserSyncInstances) {
     Object.keys(browserSyncInstances).forEach(instanceKey => {
       const instance = browserSyncInstances[instanceKey]
 
       gulpTask.pipe(instance.stream())
     })
-  }
+  }*/
 
   return gulpTask
 }
