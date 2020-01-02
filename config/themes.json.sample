@@ -31,6 +31,10 @@
     "ignore": [
       "vendor/snowdog/module-sample/{docs,dist}/**",
       "*.xml"
+    ],
+    "aliases": [
+      "~theme": "vendor/snowdog/theme-all-possible-options",
+      "~assets": "vendor/snowdog/theme-all-possible-options/web"
     ]
   }
 }

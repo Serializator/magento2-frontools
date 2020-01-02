@@ -11,11 +11,17 @@ import sourcemaps from 'gulp-sourcemaps'
 import cssnano from 'cssnano'
 import autoprefixer from 'autoprefixer'
 import postcss from 'gulp-postcss'
+import aliases from 'gulp-style-aliases';
 
 import configLoader from '../helpers/config-loader'
 import sassError from './sass-error'
 import { env, themes, tempPath, projectPath, browserSyncInstances } from '../helpers/config'
 
+const getThemeAliases = function(theme) {
+  return (theme.aliases || []).filter(function(alias) {
+    return typeof alias === 'string';
+  })
+}
 
 export default function(name, file) {
   const theme = themes[name]
@@ -55,6 +61,7 @@ export default function(name, file) {
     file || srcBase + '/**/*.scss',
     { base: srcBase }
   )
+    .pipe(aliases(getThemeAliases(theme)))
     .pipe(
       gulpIf(
         !env.ci,

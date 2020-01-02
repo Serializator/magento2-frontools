@@ -33,6 +33,7 @@ Check `config/themes.json.sample` to get samples.
 - `postcss` - (deafult `["autoprefixer({ overrideBrowserslist: browserslist })"]`) PostCSS plugins config. Have to be an array.
 - `modules` - list of modules witch you want to map inside your theme
 - `ignore` - array of ignore patterns
+- `aliases` - array of aliases which can be used in `@import` and `url(...)` expressions
 
 ## `watcher.json` structure
 Check `config/watcher.json.sample` to get samples.
